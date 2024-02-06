@@ -1,12 +1,12 @@
 import os
 from flask import Flask
-from flask import render_template
+from flask import render_template, jsonify
 
 app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    return render_template('index.html')
+    return jsonify({'message': 'ok'})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
