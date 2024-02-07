@@ -6,6 +6,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/css/bootstrap.min.css" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" type="11b647026f0a5a3706885a1c-text/javascript"></script>
+<script src={{url_for('static', filename='js/script.js')}} type="text/javascript"></script>
+<link src={{url_for('static', filename='css/style.css')}} rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://js.hcaptcha.com/1/api.js" async defer type="11b647026f0a5a3706885a1c-text/javascript"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/fira_code.css" integrity="sha512-LaxQmGd9k/pW51CsEy2nLIlbUXCgsyvUEVT5fSguN2b2OBwHjMi2aiUdEEXSMg8Jvy+bCB01as61aNrHnL2DYQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -59,78 +61,40 @@ body {
 <br>
 <div class="h-captcha" data-sitekey="7f84b495-feb9-4e81-9fcb-3c5bad0b7dcf" data-callback="onHCaptchaVerified"></div>
 <br>
-<button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+<button type="button" class="w-100 btn btn-lg btn-primary" onclick="login()">Sign in</button>
 <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
 </form>
 </main>
+<script>
 
-<script type="11b647026f0a5a3706885a1c-text/javascript">
-document.addEventListener("DOMContentLoaded", function() {
-    var hcaptchaWidgetId; // Store the hCaptcha widget ID
+            function login() {
+            var username = document.getElementById("user").value;
+            var password = document.getElementById("pass").value;
+            var b64_password = btoa(password);
 
-    // Initialize hCaptcha
-    hcaptchaWidgetId = hcaptcha.render('hcaptcha-container', {
-        sitekey: '7f84b495-feb9-4e81-9fcb-3c5bad0b7dcf',
-        callback: onHCaptchaVerified
-    });
-
-    // Reload hCaptcha when the "Reload Captcha" button is clicked
-    document.getElementById('reloadCaptchaBtn').addEventListener('click', function() {
-        hcaptcha.reset(hcaptchaWidgetId);
-    });
-    
-    // Define the callback function for hCaptcha verification
-    function onHCaptchaVerified(response) {
-        // Handle the hCaptcha response here
-    }
-});
-</script>
-<script type="11b647026f0a5a3706885a1c-text/javascript">
-var hCaptchaResponse = '';
-
-// Define the callback function for hCaptcha verification
-function onHCaptchaVerified(response) {
-    hCaptchaResponse = response; // Store the hCaptcha response
-}
-
-function login(response) {
-    var user = $('#user').val();
-    var pass = $('#pass').val();
-    $.ajax({
-        type: 'POST',
-        url: 'login.php',
-        data: {
-            username: user,
-            password: pass,
-            hcaptcha_response: response // Include the hCaptcha response in your request
-        },
-        success: function(response) {
-            if (response === 'success') {
-                window.location.href = 'dash.php';
-            } else {
-              var error = JSON.parse(response);
-
-                $('#error-message').text(error.error).removeClass('d-none');
-
-                setTimeout(function() {
-                    $('#error-message').addClass('d-none');
-                }, 2000);
-            }
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: b64_password,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                    window.location.href = '/home';
+                } else {
+                    document.getElementById("error-message").innerHTML = data.message;
+                    document.getElementById("error-message").classList.remove('d-none');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
-    });
-}
-
-// In the submit event handler, replace the alert for CAPTCHA verification:
-$(document).ready(function() {
-    $('#loginForm').on('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
-        if (!hCaptchaResponse) { // Check if the hCaptcha response is not available
-            $('#error-message').text('Please complete the CAPTCHA verification.').removeClass('d-none');
-        } else {
-            login(hCaptchaResponse); // Proceed with login if hCaptcha response is available
-        }
-    });
-});
-</script>
-<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="11b647026f0a5a3706885a1c-|49" defer></script></body>
+    </script>
 </html>
